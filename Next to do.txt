@@ -1,1 +1,0 @@
-create an environment.yml file to create a virtul environment (now something wrong with creating a virtual environment)
