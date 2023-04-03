@@ -1,10 +1,10 @@
 
 from scipy.fft import fft, ifft, fftfreq
 import numpy as np
+from scipy.signal import lfilter, filtfilt 
 
 def smoothen_fft(data,samplingRate):
-    file_fft = []
-    file_fft_half = []
+    data_filtered = []
 
     N = len(data)
     for y,fs in zip(data,samplingRate):
@@ -16,8 +16,14 @@ def smoothen_fft(data,samplingRate):
         xf = fftfreq(N, fs)[:N//2]
 
         #Perform smoothing
-    
-    
-    return data
+        n = 5  # the larger n is, the smoother curve will be
+        b = [1.0 / n] * n
+        a = 1
+        # yf_filter = lfilter(b, a, yf)
+        yf_filter = filtfilt(b, a, yf)
+        
+        data_filtered.append(ifft(yf_filter))
+
+    return data_filtered
 
 
