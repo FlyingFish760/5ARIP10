@@ -47,10 +47,10 @@ def zcr(data):
     return zcr
 
 
-def mfcc(data, sr):
+def mfcc(data):
     mfcc = []
 
     for i in data:
-        mfcc.append(librosa.feature.mfcc(y=i, sr=sr))
+        mfcc.append(librosa.feature.mfcc(y=i, sr=16000))
         
     return mfcc
