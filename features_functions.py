@@ -1,6 +1,6 @@
 import numpy as np
 import librosa
-
+from scipy.fft import fft
 
 def extract_basics(data):
     means = []
@@ -28,16 +28,25 @@ def extract_basics_split(data):
 
     for i in data:
     
-        splits = np.array_split(i, 100)
+        splits = np.array_split(i, 50)
     
         for j in splits:
         
-            means.append(np.mean(j))
-            stds.append(np.std(j))
-            maxs.append(np.max(j))
-            mins.append(np.min(j))
-            medians.append(np.median(j))
-        
+            j_fft_v1 = fft(j)
+            j_fft = 2.0/(j.shape[0]) * np.abs(j_fft_v1[0:j.shape[0]//2])
+
+            # means.append(np.mean(j))
+            # stds.append(np.std(j))
+            # maxs.append(np.max(j))
+            # mins.append(np.min(j))
+            # medians.append(np.median(j))
+
+            means.append(np.mean(j_fft))
+            stds.append(np.std(j_fft))
+            maxs.append(np.max(j_fft))
+            mins.append(np.min(j_fft))
+            medians.append(np.median(j_fft))
+
     return means, stds, maxs, mins, medians
 
 
