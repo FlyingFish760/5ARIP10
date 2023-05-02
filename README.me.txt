@@ -1,0 +1,56 @@
+# Testing at Omron
+
+- [Microphone](#Microphone)
+- [Vibrational sensor](#Vibrational sensor)
+
+## Microphone
+
+[microphone_manual][microhone_manual]: 
+Components:
+-Microphone
+-USB cable
+
+Programs:
+-Microphone.py
+
+Python libraries:
+-sounddevice
+-scipy
+
+```
+Usage: Microphone.py
+
+Open the program in any IDE and install necassary libraries in the used environment.
+
+```
+pip install sounddevice
+pip install scipy
+```
+Adjust the following settings according to the test you want to run.
+
+fs, Sample rate in Hz, 1 - 441000
+seconds, number of seconds the microphone records
+test_day
+test_type
+
+navigate to the correct directory
+
+```
+cd "directory where Microphone.py is stored"
+```
+
+Run the program
+```
+python Microphone.py
+```
+
+This saves the recorded file in the current directory as a .wav file.
+
+
+## Vibrational sensor
+
+
+
+[microphone_manual]: https://www.bax-shop.nl/index3.php?
+option=com_download_files&product_id=354145&download_id=54945
+[adxl345spi_git]: https://github.com/nagimov/adxl345spi
