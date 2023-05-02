@@ -38,13 +38,19 @@ This saves the recorded file in the current directory as a .wav file.
 
 ## Vibration
 
-The programs used and wiring can be found in the following [git](https://github.com/nagimov/adxl345spi). The program used save the file is called Vibration.py. Make a connection with the RaspberryPi following this [guide](https://www.tomshardware.com/reviews/raspberry-pi-headless-setup-how-to,6028.html). When everything is set up you can open Vibration.py in VNC viewer and change the following paramaters.
+The programs used and wiring can be found in the following [git](https://github.com/nagimov/adxl345spi). The address of the RaspberryPi is raspberry or   The program used save the file is called Vibration.py. Make a connection with the RaspberryPi following this [guide](https://www.tomshardware.com/reviews/raspberry-pi-headless-setup-how-to,6028.html). When everything is set up you can open Vibration.py in VNC viewer and change the following paramaters.
 
 ```
 fs, Sample rate in Hz, 1 - 3200
 seconds, number of seconds the vibration sensor records
 test_day
 test_type
+```
+
+To run the program
+```
+cd 5ARIP10/Omron_visit_tests/Accelerometer
+python Vibration.py
 ```
 
 This saves the output file in the github folder on the raspberry Pi. To get it to your own laptop either use the build in file transfer from [VNC viewer](https://help.realvnc.com/hc/en-us/articles/360002250477-Transferring-Files-Between-Computers-) or push the file using github.
