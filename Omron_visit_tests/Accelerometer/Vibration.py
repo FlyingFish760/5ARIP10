@@ -6,7 +6,7 @@ seconds = 10
 test_day = 'Accelerometer_Omron'
 file_type = '.csv'
 
-test_type = '13'
+test_type = '17'
 
 test_name = test_day + '_test' + str(test_type) + '_fs' + str(fs) + '_secs' + str(seconds) + file_type
 
