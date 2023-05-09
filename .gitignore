@@ -1,4 +1,8 @@
+# Exclude data
 gearbox/
 dev_gearbox/
+
+# Exclude cash files
 __pycache__/
 figures/
+
