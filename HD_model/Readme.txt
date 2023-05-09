@@ -1,1 +1,0 @@
-HD is harmonic drive model
