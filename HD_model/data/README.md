@@ -63,7 +63,6 @@ This saves the output file in the github folder on the raspberry Pi. To get it t
 Software: dSpace controlDesk
 
 Steps for executing
-```
 1. Voedingen aan, 
 2. Rechter schakelaar uit, 
 3. Batterij aangesloten
@@ -78,19 +77,16 @@ Steps for executing
 12. Check if the 'Driver/u_ref' is at 0 otherwise reset LEM, while no currect in running --> IMPORTANT STEP
 13. Set all variables to the desired value and press enter. 
 14. Start measurement to see the data live
-```
+
 
 Steps for saving the data
-```
 1. Go to 'Measurement configuration' 
 2. Click on the red button that states something like 'start instant recording'
 3. Manually end the recording
 4. The measurement can be exporded by moving to the 'project' tab, right click on the latest measurement. It should be exported as .csv preferably.
 5. The X is the time and the Y is the other outputed data 
-```
 
 Steps to change the input signal
-```
 1. Go offline in the dspace environment (click on 'go offline' or press ctr+F8)
 2. Go to the Simulink model
 3. Make any desirable changes on how the input 'w_ref' is shaped. Use building blocks from simulink (e.g. block signal, ramp, step etc...)
@@ -99,14 +95,13 @@ Initialise any new variables at 0.
 5. Go back to dSpace
 6. Go online again in dSpace. 
 7. Go for 'Yes' when the popup asks for applying changes on the variables
-8.. If any new variables are added in the Simulink Model, add instruments with panel on the right to set the values.
+8. If any new variables are added in the Simulink Model, add instruments with panel on the right to set the values.
 9. Set new values with the instruments and press enter to see the changes in the input signal
-```
 
 
 sample freq:t_step variable    Modeling model settings 
 
 
 Opening Matlab for the first time, select the following:
-1: Kies rti1104
-2: Set preferences automaticaly
+1. Kies rti1104
+2. Set preferences automaticaly
