@@ -9,7 +9,15 @@ import csv
 
 
 def load_acc_data(dir_data, locat, date, fs, secs):
+    """
+    load features of vibration data
+
+    :param dir_data: directory of accelerometer data;
+    :param locat: test location (e.g. 'Measurem_Omron');
+    param date: test date (e.g. '03_05_Omron');
     
+    :return: acc_files, acc_time, acc_data, acc_data_fft
+    """
     dir_acc = os.path.join(dir_data, locat, 'Accelerometer', date)
 
     acc_files = []
