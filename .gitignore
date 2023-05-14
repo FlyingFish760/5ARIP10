@@ -1,4 +1,8 @@
-gearbox/
-dev_gearbox/
+# Exclude data
+Gearbox_model/data/
+Gearbox_model/gearbox/
+
+# Exclude cash files
 __pycache__/
 figures/
+
