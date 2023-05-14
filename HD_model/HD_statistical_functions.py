@@ -9,8 +9,8 @@ import csv
 
 def loading_data(directory, date):
     
-    dir_acc = os.path.join(directory, "Accelerometer", date)
-    dir_mic = os.path.join(directory, "Microphone", date)
+    # dir_acc = os.path.join(directory, date, "Accelerometer")
+    dir_mic = os.path.join(directory, date, "Microphone")
 
     acc_files = []
     acc_time = []
@@ -22,22 +22,22 @@ def loading_data(directory, date):
     mic_data = []
     mic_data_fft = []
 
-    for i in os.listdir(dir_acc):
-        acc_files.append(i)
+    # for i in os.listdir(dir_acc):
+    #     acc_files.append(i)
 
-        with open(dir_acc + '/' + i, 'r') as file:
-            csv_data = np.asarray(list(csv.reader(file)))
+    #     with open(dir_acc + '/' + i, 'r') as file:
+    #         csv_data = np.asarray(list(csv.reader(file)))
             
-        #samplerate, data = wavfile.read(dir_acc + '\\' + i) # for windows
-        acc_time.append(csv_data[1:,0])
+    #     #samplerate, data = wavfile.read(dir_acc + '\\' + i) # for windows
+    #     acc_time.append(csv_data[1:,0])
 
-        data = csv_data[1:,1:4]
-        acc_data.append(data)
+    #     data = csv_data[1:,1:4]
+    #     acc_data.append(data)
 
-        #also store the fft data
-        data_fft_v1 = fft(data)
-        data_fft = 2.0/(data.shape[0]) * np.abs(data_fft_v1[0:data.shape[0]//2])
-        acc_data_fft.append(data_fft)
+    #     #also store the fft data
+    #     data_fft_v1 = fft(data)
+    #     data_fft = 2.0/(data.shape[0]) * np.abs(data_fft_v1[0:data.shape[0]//2])
+    #     acc_data_fft.append(data_fft)
 
     for i in os.listdir(dir_mic):
         mic_files.append(i)
@@ -114,6 +114,7 @@ def split_extract_features(data, fft_bool=False):
             medians.append(np.median(split))
     
     return means, stds, maxs, mins, medians
+    
 
 def plot_basics(anom_means, anom_stds, anom_maxs, anom_mins, anom_medians, norm_means, norm_stds, norm_maxs, norm_mins, norm_medians):
     
