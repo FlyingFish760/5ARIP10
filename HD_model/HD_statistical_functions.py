@@ -7,23 +7,23 @@ from scipy.io import wavfile
 import os
 import csv
 
-
-def load_acc_data(dir_data, locat, date, fs, secs):
-    """
-    load features of vibration data
-
-    :param dir_data: directory of accelerometer data;
-    :param locat: test location (e.g. 'Measurem_Omron');
-    param date: test date (e.g. '03_05_Omron');
+def loading_data(directory, date, condition):
     
-    # dir_acc = os.path.join(directory, date, "Accelerometer")
-    dir_mic = os.path.join(directory, date, "Microphone")
+    if condition == 'working':
+        # dir_acc = os.path.join(directory, date, "Accelerometer")
+        dir_mic = os.path.join(directory, date, "working_drive\Microphone")
+    elif condition == 'faulty': 
+        dir_mic = os.path.join(directory, date, "faulty_drive\Microphone")
 
     acc_files = []
     acc_time = []
     acc_data = []
     acc_data_fft = []
 
+    mic_files = []
+    mic_sr = []
+    mic_data = []
+    mic_data_fft = []
 
     # for i in os.listdir(dir_acc):
     #     acc_files.append(i)
@@ -50,17 +50,12 @@ def load_acc_data(dir_data, locat, date, fs, secs):
         mic_sr.append(samplerate)
         mic_data.append(data)
 
-            #also store the fft data
-            data_fft_v1 = fft(data)
-            data_fft = 2.0/(data.shape[0]) * np.abs(data_fft_v1[0:data.shape[0]//2])
-            mic_data_fft.append(data_fft)
+        #also store the fft data
+        data_fft_v1 = fft(data)
+        data_fft = 2.0/(data.shape[0]) * np.abs(data_fft_v1[0:data.shape[0]//2])
+        mic_data_fft.append(data_fft)
     
-    mic_files = np.array(mic_files)
-    mic_sr = np.array(mic_sr)
-    mic_data = np.array(mic_data)
-    mic_data_fft = np.array(mic_data_fft)
-
-    return  mic_files, mic_sr, mic_data, mic_data_fft
+    return acc_files, acc_time, acc_data, acc_data_fft, mic_files, mic_sr, mic_data, mic_data_fft
 
 
 def plot_recording(acc_time,acc_data,mic_sr,mic_data):
