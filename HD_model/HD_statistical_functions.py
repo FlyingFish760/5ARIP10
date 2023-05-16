@@ -16,9 +16,8 @@ def load_acc_data(dir_data, locat, date, fs, secs):
     :param locat: test location (e.g. 'Measurem_Omron');
     param date: test date (e.g. '03_05_Omron');
     
-    :return: acc_files, acc_time, acc_data, acc_data_fft
-    """
-    dir_acc = os.path.join(dir_data, locat, 'Accelerometer', date)
+    # dir_acc = os.path.join(directory, date, "Accelerometer")
+    dir_mic = os.path.join(directory, date, "Microphone")
 
     acc_files = []
     acc_time = []
@@ -26,49 +25,30 @@ def load_acc_data(dir_data, locat, date, fs, secs):
     acc_data_fft = []
 
 
-    for i in os.listdir(dir_acc):    
-        if f"fs{fs}" in i and f"secs{secs}" in i:
-            acc_files.append(i) 
+    # for i in os.listdir(dir_acc):
+    #     acc_files.append(i)
 
-            with open(dir_acc + '/' + i, 'r') as file:
-                csv_data = np.asarray(list(csv.reader(file)))
-                
-            #samplerate, data = wavfile.read(dir_acc + '\\' + i) # for windows
-            acc_time.append(csv_data[1:,0])
-
-            data = csv_data[1:,1:4]
-            acc_data.append(data)
-
-            #also store the fft data
-            data_fft_v1 = fft(data)
-            data_fft = 2.0/(data.shape[0]) * np.abs(data_fft_v1[0:data.shape[0]//2])
-            acc_data_fft.append(data_fft)
-    
-    acc_files = np.array(acc_files)
-    acc_time = np.array(acc_time)
-    acc_data = np.array(acc_data)
-    acc_data_fft = np.array(acc_data_fft)
-
-
-    return  acc_files, acc_time, acc_data, acc_data_fft
-
-def load_mic_data(dir_data, locat, date, fs, secs):
-    
-    dir_mic = os.path.join(dir_data, locat, 'Microphone', date)
-
-    mic_files = []
-    mic_sr = []
-    mic_data = []
-    mic_data_fft = []
-
-    for i in os.listdir(dir_mic):   
-        if f"fs{fs}" in i and f"secs{secs}" in i:
-            mic_files.append(i)
+    #     with open(dir_acc + '/' + i, 'r') as file:
+    #         csv_data = np.asarray(list(csv.reader(file)))
             
-            #samplerate, data = wavfile.read(dir_acc + '\\' + i) # for windows
-            samplerate, data = wavfile.read(dir_mic + '/' + i) # for macos
-            mic_sr.append(samplerate)
-            mic_data.append(data)
+    #     #samplerate, data = wavfile.read(dir_acc + '\\' + i) # for windows
+    #     acc_time.append(csv_data[1:,0])
+
+    #     data = csv_data[1:,1:4]
+    #     acc_data.append(data)
+
+    #     #also store the fft data
+    #     data_fft_v1 = fft(data)
+    #     data_fft = 2.0/(data.shape[0]) * np.abs(data_fft_v1[0:data.shape[0]//2])
+    #     acc_data_fft.append(data_fft)
+
+    for i in os.listdir(dir_mic):
+        mic_files.append(i)
+        
+        #samplerate, data = wavfile.read(dir_acc + '\\' + i) # for windows
+        samplerate, data = wavfile.read(dir_mic + '/' + i) # for macos
+        mic_sr.append(samplerate)
+        mic_data.append(data)
 
             #also store the fft data
             data_fft_v1 = fft(data)
@@ -142,6 +122,7 @@ def split_extract_features(data, fft_bool=False):
             medians.append(np.median(split))
     
     return means, stds, maxs, mins, medians
+    
 
 def plot_basics(anom_means, anom_stds, anom_maxs, anom_mins, anom_medians, norm_means, norm_stds, norm_maxs, norm_mins, norm_medians):
     
