@@ -6,3 +6,8 @@ Gearbox_model/gearbox/
 __pycache__/
 figures/
 
+# exlude measuement data
+HD_model/
+HD_model_NEW/
+Omron_visit_tests/
+
