@@ -1,6 +1,6 @@
 descriptions,General,User,20213751
 ,General,DateTime,16/05/2023 13:40:40
-,General,Origin,"Software revision: hildspace_em_v2.sdf, hildspace_em_v2.ppc\nVariable description: hildspace_em_v2.sdf\n    Platform / Device: Platform [DS1104 R&D Controller Board, assigned to 'ds1104']\nControlDesk version: 7.3"
+",General,Origin,""Software revision: hildspace_em_v2.sdf, hildspace_em_v2.ppc\nVariable description: hildspace_em_v2.sdf\n    Platform / Device: Platform [DS1104 R&D Controller Board, assigned to 'ds1104']\nControlDesk version: 7.3"""
 ,General,Description,
 ,Recording,StartCondition,None (Immediate Recording)
 ,Recording,StopCondition,None
@@ -30529,4 +30529,3 @@ trace_values,0,-0.19772094798067533,-0.014584325181031064,1.9184856473371195,18.
 ,60.995427629986352,-0.20737557259823708,-0.037793936074688443,1.9472408183571803,20.231644475393985,-0.51785555752840917
 ,60.997427495940883,-0.20593637164729964,-0.035721173363271824,1.9536365471291133,19.59646829773062,-0.51108620383522729
 ,60.999427321804887,-0.20250467454479731,-0.032433226352303314,1.951048595826371,19.986970299567272,-0.51277854225852282
-

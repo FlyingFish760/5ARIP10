@@ -18,7 +18,7 @@ class HD(object):
         Class constructor
         :param data_path: The path to data
         """
-        self._year = '2023'
+        self._year = '2023_05'
         self._name = 'HD'
         self._dSpace_ext = '.csv'
         self._vibr_ext = '.csv'
