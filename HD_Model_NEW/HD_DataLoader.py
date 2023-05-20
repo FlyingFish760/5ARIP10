@@ -11,9 +11,11 @@ from os.path import join, abspath, isfile, isdir, splitext
 from os import makedirs, listdir
 from sklearn.model_selection import train_test_split, KFold
 import scipy.io.wavfile as wav
+from torch.utils.data import Dataset
 
-#TODO:
-# - functie dat output 1 list voor alle normal drives data en 1 list voor alle faulty drive data. Misschien een functie zoals deze per sensor data? 
+
+# TODO: 
+# - functie dat output 1 list voor alle normal drives data en 1 list voor alle faulty drive data. Misschien een functie zoals deze per sensor data?
 #      (ik denk dat het makkelijk is om deze functie eerst te schrijven want die kun je dan gebruiken voor de andere functies hieronder)
 # - functie voor statistical features. voor mic, vibr dspace. Als input de database?
 # - Functie voor NN inputs, dus train, test, val sets with seperate label sets (implement random seed for split of train and test)
@@ -49,12 +51,12 @@ class HD(object):
         'test_id'(int): {
             'attributes (str)': {
                 'HD_label': str --> F1,N1,...
-                'HD_state': int --> Faulty=1, Normal=0
+                'HD_status': int --> Faulty=1, Normal=0
                 'Speed': int [rad/s]
                 'test_iter': str
             'Microphone (str)': {
                 'SampleRate': int
-                'data': list([left right]) (float)
+                'Data': list([left right]) (float)
             'Vibration (str)': {
                 'SampleRate': int
                 'time': list(float)
@@ -91,8 +93,7 @@ class HD(object):
             ids=ids+1
 
         return database
-    
-
+        
     # Data loading functions 
     def _get_attributes(self,file_name):
         # Get the file name without the extension
@@ -174,7 +175,7 @@ class HD(object):
         Generate ...
         :return:  'Vibration (str)': {
                 'SampleRate': int
-                'time': list(float)
+                'time': list(float) # arrays not lists (which is good)
                 'X_vibr': list(float)
                 'Y_vibr': list(float)
                 'Z_vibr': list(float)
@@ -212,17 +213,150 @@ class HD(object):
 
         return file_name
 
-    def get_NN_Loaders():
+class SplitNormalFaulty(object):
+    def __init__(self, database):
+        self.normal = 0
+        self.faulty = 1
+        self.database = database
 
+    def split_faulty_working_mic(self, atribute):
+        """
+        gives two lists, working harmonic drives and faulty harmonic drives
 
-        return test_set,test_labels,train_set,train_labels,validation_set,validation_labels
+        input: 
+            attribute: str
+                'Data': list([left right]) (float)
 
-    def _get_melspectogram_features(data,
-                        n_mels=64,
-                        n_frames=5,
-                        n_fft=1024,
-                        hop_length=512,
-                        power=2.0):
+        return : 'normal':array(float)
+                'faulty':array(float)
+        """
+        normal = []
+        faulty = []
+        for data in self.database:
+            if self.database[data]['attributes']['HD_status']== self.normal: #it is normal HD
+                normal.append((self.database[data]['Microphone'][atribute]))
+            elif self.database[data]['attributes']['HD_status']==self.faulty:
+                faulty.append((self.database[data]['Microphone'][atribute]))
+            else:
+                print("Undefined state")
+
+        return normal, faulty
+    
+    def split_faulty_working_vib(self, atrribute):
+        """
+        gives two lists, working harmonic drives and faulty harmonic drives
+
+        input: 
+            attribute: str
+                'X_vibr': list(float)
+                'Y_vibr': list(float)
+                'Z_vibr': list(float)
+
+        return : 'normal':array(float)
+                'faulty':array(float)
+        """
+        normal = []
+        faulty = []
+        for data in self.database:
+            if self.database[data]['attributes']['HD_status']== self.normal: #it is normal HD
+                normal.append((self.database[data]['Vibration'][atrribute]))
+            elif self.database[data]['attributes']['HD_status']==self.faulty:
+                faulty.append((self.database[data]['Vibration'][atrribute]))
+            else:
+                print("Undefined state")
+
+        return normal, faulty
+    
+    def split_faulty_working_dspace(self, atrribute):
+        """
+        gives two lists, working harmonic drives and faulty harmonic drives
+
+        input: 
+            attribute: str
+                'I_bat': list(float) [A]
+                'I_dyno_LP': list(float)  [A]   
+                'i_motor_LP': list(float) [A]
+                'w_out': list(float) [V]
+                'u_bat': list(float) [V]
+
+        return : 'normal':array(float)
+                'faulty':array(float)
+        """
+        normal = []
+        faulty = []
+        for data in self.database:
+            if self.database[data]['attributes']['HD_status']== self.normal: #it is normal HD
+                normal.append((self.database[data]['dSpace'][atrribute]))
+            elif self.database[data]['attributes']['HD_status']==self.faulty:
+                faulty.append((self.database[data]['dSpace'][atrribute]))
+            else:
+                print("Undefined state")
+
+        return normal, faulty
+    
+
+class CustomDataset(Dataset):
+    def __init__(self, data, labels):
+        self.labels = labels
+        self.data = data
+
+    def __len__(self):
+        return len(self.labels)
+    
+    def __getitem__(self, idx):
+        data = np.array(self.data[idx])
+        label = self.labels[idx]
+        return data, label
+    
+class DataPreprocessing(object):
+    def __init__(self, working, faulty):
+        self.working = working
+        self.faulty = faulty
+
+        self.working_label = 0
+        self.faulty_label = 1
+        
+    def create_data_batches(self, start_time = 0, stop_time = 1, window_length = 100, stride = 100):
+
+        self.start_time = start_time
+        self.stop_time = stop_time
+        self.window_length = window_length
+        self.stride = stride
+
+        batches = []
+        labels = []
+        working_batches, working_labels = self._create_batches(self.working, label = self.working_label)
+
+        faulty_batches, faulty_labels = self._create_batches(self.faulty, label = self.faulty_label)
+
+        batches = working_batches + faulty_batches
+        labels = working_labels + faulty_labels
+
+        return batches, labels
+
+    def _create_batches(self, data, label):
+        data_length = len(data[0])
+        self.start_sample = round(self.start_time * data_length)
+        self.stop_sample = round(self.stop_time * data_length)
+
+        batches = []
+        labels = []
+
+        for data_loop in data: #Kutnaam
+            for i in range(self.start_sample,self.stop_sample,self.stride):
+                batches.append(data_loop[i:i+self.window_length])
+                labels.append(label)
+
+        print("Number of batches is {}".format(len(batches)))
+
+        return batches, labels
+    
+    def _get_melspectogram_features(self, data,
+                    n_mels=64,
+                    n_frames=5,
+                    n_fft=1024,
+                    hop_length=512,
+                    power=2.0):
         """
         convert file_name to a vector array.
 
@@ -259,3 +393,41 @@ class HD(object):
             vectors[:, n_mels * t : n_mels * (t + 1)] = log_mel_spectrogram[:, t : t + n_vectors].T
 
         return vectors
+    
+class StatisticalFeatures(object):
+    def __init__(self, data):
+        self.data = data
+
+    def get_statistical_features(self, fft_bool=False):
+        """
+        Generate ...
+        :return:  
+        """
+        means = []
+        stds = []
+        maxs = []
+        mins = []
+        medians = []
+
+        for i in data:
+            
+            splits = np.array_split(i, 50)
+            
+            for j in splits:
+                
+                if fft_bool:
+                    j_fft = fft(j)
+                    split = 2.0/(j.shape[0]) * np.abs(j_fft[0:j.shape[0]//2])
+                else:
+                    split = j
+                
+                means.append(np.mean(split))
+                stds.append(np.std(split))
+                maxs.append(np.max(split))
+                mins.append(np.min(split))
+                medians.append(np.median(split))
+    
+        return means, stds, maxs, mins, medians
+    
+
+
