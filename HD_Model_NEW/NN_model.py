@@ -8,21 +8,21 @@ class Classifier(nn.Module):
   :Learn it with faulty and normal HD data
   WOrks 
   """
-  def __init__(self,input_dim=100):
+  def __init__(self,input_dim):
     super().__init__()
 
     self.input = input_dim
 
-    self.fc1 = nn.Linear(input_dim, 0.5*input_dim)
-    self.fc2 = nn.Linear(0.5*input_dim, 0.2*input_dim)
-    self.fc3 = nn.Linear(0.2*input_dim, 2)
-    self.prob = nn.Sigmoid()
+    self.fc1 = nn.Linear(input_dim, 100)
+    self.fc2 = nn.Linear(100, 30)
+    self.fc3 = nn.Linear(30, 1)
+    self.sigmoid = nn.Sigmoid()
 
   def forward(self, x):
     x = F.relu(self.fc1(x))
     x = F.relu(self.fc2(x))
     x = F.relu(self.fc3(x))
-    x = self.prob(x)
+    x = self.sigmoid(x)
 
     return x
 
