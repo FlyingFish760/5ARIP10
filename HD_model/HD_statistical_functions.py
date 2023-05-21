@@ -7,7 +7,7 @@ from scipy.io import wavfile
 import os
 import csv
 
-def loading_data(directory, date, condition):
+def loading_mic_data(directory, date, condition):
     
     if condition == 'working':
         # dir_acc = os.path.join(directory, date, "Accelerometer")
@@ -56,6 +56,7 @@ def loading_data(directory, date, condition):
         mic_data_fft.append(data_fft)
     
     return acc_files, acc_time, acc_data, acc_data_fft, mic_files, mic_sr, mic_data, mic_data_fft
+
 
 
 def plot_recording(acc_time,acc_data,mic_sr,mic_data):
@@ -118,6 +119,129 @@ def split_extract_features(data, fft_bool=False):
     
     return means, stds, maxs, mins, medians
     
+
+def split_extract_vibr_features(data, x):
+    """ 
+    Calculate the statistical features for every x sample points along the last dimension
+    
+    """
+
+    # Reshape the data to split them
+    reshaped_data = np.reshape(data, (data.shape[0], data.shape[1], -1, x))  
+    #calculate fft of data
+    reshaped_data_fft = np.abs(np.fft.fft(reshaped_data, axis=3))
+
+    # calculate statistical features of fft data
+    # use split function to split the data into 3 directions (x, y, z dirctions)
+    vibr_fft_means = np.split(np.mean(reshaped_data_fft, axis=-1), 3, axis=1)
+    vibr_fft_maxs = np.split(np.max(reshaped_data_fft, axis=-1), 3, axis=1)
+    vibr_fft_mins = np.split(np.min(reshaped_data_fft, axis=-1), 3, axis=1)
+    vibr_fft_medians = np.split(np.median(reshaped_data_fft, axis=-1), 3, axis=1)
+    vibr_fft_stds = np.split(np.std(reshaped_data_fft, axis=-1), 3, axis=1)
+
+    # use np.squeeze to eliminate the dimension with only one element
+    vibr_fft_means = np.squeeze(vibr_fft_means)
+    vibr_fft_maxs = np.squeeze(vibr_fft_maxs)
+    vibr_fft_mins = np.squeeze(vibr_fft_mins)
+    vibr_fft_medians = np.squeeze(vibr_fft_medians)
+    vibr_fft_stds = np.squeeze(vibr_fft_stds)
+    
+    # split data into separate x,y,z directions
+    x_vibr_fft_means, y_vibr_fft_means, z_vibr_fft_means = vibr_fft_means
+    x_vibr_fft_maxs, y_vibr_fft_maxs, z_vibr_fft_maxs = vibr_fft_maxs
+    x_vibr_fft_mins, y_vibr_fft_mins, z_vibr_fft_mins = vibr_fft_mins
+    x_vibr_fft_medians, y_vibr_fft_medians, z_vibr_fft_medians = vibr_fft_medians
+    x_vibr_fft_stds, y_vibr_fft_stds, z_vibr_fft_stds = vibr_fft_stds
+
+
+    # calculate statistical features of original data
+    vibr_means = np.split(np.mean(reshaped_data, axis=-1), 3, axis=1)
+    vibr_maxs = np.split(np.max(reshaped_data, axis=-1), 3, axis=1)
+    vibr_mins = np.split(np.min(reshaped_data, axis=-1), 3, axis=1)
+    vibr_medians = np.split(np.median(reshaped_data, axis=-1), 3, axis=1)
+    vibr_stds = np.split(np.std(reshaped_data, axis=-1), 3, axis=1)
+
+    # use np.squeeze to eliminate the dimension with only one element
+    vibr_means = np.squeeze(vibr_means)
+    vibr_maxs = np.squeeze(vibr_maxs)
+    vibr_mins = np.squeeze(vibr_mins)
+    vibr_medians = np.squeeze(vibr_medians)
+    vibr_stds = np.squeeze(vibr_stds)
+    
+    # split data into separate x,y,z directions
+    x_vibr_means, y_vibr_means, z_vibr_means = vibr_means
+    x_vibr_maxs, y_vibr_maxs, z_vibr_maxs = vibr_maxs
+    x_vibr_mins, y_vibr_mins, z_vibr_mins = vibr_mins
+    x_vibr_medians, y_vibr_medians, z_vibr_medians = vibr_medians
+    x_vibr_stds, y_vibr_stds, z_vibr_stds = vibr_stds
+
+    # integrade data to a high dimensional feature matrix: size: (n_speeds * n_time_window) * (3(x, y,z) * 10(5 original 
+    # features + 5 fft features)); 
+    # sequence of features: x_vibr_means,x_vibr_maxs...x_vibr_fft_means,x_vibr_fft_maxs...y...z...
+    vibr_feats = []
+    for i in [x_vibr_means, x_vibr_maxs, x_vibr_mins, x_vibr_medians, x_vibr_stds, 
+              x_vibr_fft_means, x_vibr_fft_maxs, x_vibr_fft_mins, x_vibr_fft_medians, x_vibr_fft_stds,
+              y_vibr_means, y_vibr_maxs, y_vibr_mins, y_vibr_medians, y_vibr_stds, 
+              y_vibr_fft_means, y_vibr_fft_maxs, y_vibr_fft_mins, y_vibr_fft_medians, y_vibr_fft_stds,
+              z_vibr_means, z_vibr_maxs, z_vibr_mins, z_vibr_medians, z_vibr_stds, 
+              z_vibr_fft_means, z_vibr_fft_maxs, z_vibr_fft_mins, z_vibr_fft_medians, z_vibr_fft_stds]:
+        i = i.flatten()
+        vibr_feats.append(i)
+
+    vibr_feats = np.array(vibr_feats).T
+    
+    return vibr_feats
+
+def split_extract_mic_features(data, x):
+    """ 
+    Calculate the statistical features for every x sample points
+    
+    """
+    # only keep the left stereo, since the difference of left and right stereos is very small:
+    # shape:[11*1*2646000*2]-> shape:[11*1*2646000*2]
+    data = data[:, :, :, 0]
+
+    # eliminate dimensions of only one element
+    # shape:[11*1*2646000*1]-> shape:[11*2646000]
+    data = np.squeeze(data)
+
+    # Reshape the data to split them every x sample points
+    # shape:[11*2646000]-> shape:[11*(2646000/x)*x]
+    reshaped_data = np.reshape(data, (data.shape[0], -1, x)) 
+
+    #calculate fft of data
+    reshaped_data_fft = np.abs(np.fft.fft(reshaped_data, axis=2))
+
+    # calculate statistical features of fft data
+    # shape:[11*(2646000/x)*x]-> shape:[11*(2646000/x)]
+    mic_fft_means = np.mean(reshaped_data_fft, axis=-1)
+    mic_fft_maxs = np.max(reshaped_data_fft, axis=-1)
+    mic_fft_mins = np.min(reshaped_data_fft, axis=-1)
+    mic_fft_medians = np.median(reshaped_data_fft, axis=-1)
+    mic_fft_stds = np.std(reshaped_data_fft, axis=-1)
+    
+
+
+    # calculate statistical features of original data
+    # shape:[11*(2646000/x)*x]-> shape:[11*(2646000/x)]
+    mic_means = np.mean(reshaped_data, axis=-1)
+    mic_maxs = np.max(reshaped_data, axis=-1)
+    mic_mins = np.min(reshaped_data, axis=-1)
+    mic_medians = np.median(reshaped_data, axis=-1)
+    mic_stds = np.std(reshaped_data, axis=-1)
+
+    # integrade data to a high dimensional feature matrix: size: (n_speeds * n_time_window) * (10(5 original 
+    # features + 5 fft features)); 
+    # sequence of features: mic_means,mic_maxs...mic_fft_means,mic_fft_maxs...
+    mic_feats = []
+    for i in [mic_means, mic_maxs, mic_mins, mic_medians, mic_stds, 
+              mic_fft_means, mic_fft_maxs, mic_fft_mins, mic_fft_medians, mic_fft_stds]:
+        i = i.flatten()
+        mic_feats.append(i)
+
+    mic_feats = np.array(mic_feats).T
+    
+    return mic_feats
 
 def plot_basics(anom_means, anom_stds, anom_maxs, anom_mins, anom_medians, norm_means, norm_stds, norm_maxs, norm_mins, norm_medians):
     
