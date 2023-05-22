@@ -13,9 +13,9 @@ class Classifier(nn.Module):
 
     self.input = input_dim
 
-    self.fc1 = nn.Linear(input_dim, 100)
-    self.fc2 = nn.Linear(100, 30)
-    self.fc3 = nn.Linear(30, 1)
+    self.fc1 = nn.Linear(input_dim, 20)
+    self.fc2 = nn.Linear(20, 20)
+    self.fc3 = nn.Linear(20, 1)
     self.sigmoid = nn.Sigmoid()
 
   def forward(self, x):

@@ -458,13 +458,12 @@ class VairableSensorsDataset(Dataset):
      
                 #Combine all the sensor data that should be included
                 data_tot = np.concatenate((data_mic,data_vibr,data_curr))
+                
+                # print("Length of inputs is {}".format(len(data_tot)))
 
                 #Append to the list
                 input_data.append(torch.Tensor(data_tot))
-                labels.append(torch.Tensor(database[data]['attributes']['HD_status']))
-
-        print("Number of inputs is {}".format(len(input_data)))
-        print("Number of labels is {}".format(len(labels)))
+                labels.append(database[data]['attributes']['HD_status'])
 
         return input_data, labels
 
