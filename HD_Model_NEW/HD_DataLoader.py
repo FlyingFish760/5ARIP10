@@ -394,11 +394,11 @@ class StatisticalFeatures(object):
 
 
 class VairableSensorsDataset(Dataset):
-    def __init__(self, database, mic_bool = 'True', vibr_bool = 'False', cur_bool = 'False', speed_bool='False', start_percentage=0.1, stop_percentage = 0.9, window_sec = 1, stride_sec=0.2):
+    def __init__(self, database, mic_bool = 'True', vibr_bool = 'False', cur_bool = 'False', start_percentage=0.1, stop_percentage = 0.9, window_sec = 1, stride_sec=0.2):
         self.mic_bool = mic_bool
         self.vibr_bool = vibr_bool
         self.cur_bool = cur_bool
-        self.speed_bool = speed_bool
+        # self.speed_bool = speed_bool
         self.start_perc = start_percentage
         self.stop_perc = stop_percentage
         self.window_sec = window_sec
@@ -457,13 +457,14 @@ class VairableSensorsDataset(Dataset):
                 else:
                     data_curr = []
 
-                if self.speed_bool == 'True':
-                    speed = database[data]['attributes']['speed']
-                else:
-                    speed = []
+                # if self.speed_bool == 'True':
+                #     speed = database[data]['attributes']['speed']
+                # else:
+                #     speed = []
 
                 #Combine all the sensor data that should be included
-                data_tot = np.concatenate((data_mic,data_vibr,data_curr,speed))
+                # data_tot = np.concatenate((data_mic,data_vibr,data_curr,speed))
+                data_tot = np.concatenate((data_mic,data_vibr,data_curr))
                 
                 #Append to the list
                 input_data.append(torch.Tensor(data_tot))
