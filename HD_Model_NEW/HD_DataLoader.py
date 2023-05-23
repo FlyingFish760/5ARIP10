@@ -15,13 +15,9 @@ from torch.utils.data import Dataset
 from scipy.fft import fft
 import torch
 
-
-# TODO: 
-# - functie dat output 1 list voor alle normal drives data en 1 list voor alle faulty drive data. Misschien een functie zoals deze per sensor data?
-#      (ik denk dat het makkelijk is om deze functie eerst te schrijven want die kun je dan gebruiken voor de andere functies hieronder)
-# - functie voor statistical features. voor mic, vibr dspace. Als input de database?
-# - Functie voor NN inputs, dus train, test, val sets with seperate label sets (implement random seed for split of train and test)
-
+##########################################################
+# Class to load all data into a database
+##########################################################
 
 class HD(object):
     def __init__(self, data_path=''):
@@ -215,6 +211,9 @@ class HD(object):
 
         return file_name
 
+##########################################################
+# Class to easily access splitted data
+##########################################################
 class SplitNormalFaulty(object):
     def __init__(self, database):
         self.normal = 0
@@ -351,8 +350,11 @@ class DataPreprocessing(object):
 
         return batches, labels
     
+##########################################################
+# Class to get the data into statistical features dataset
+##########################################################
 
-class StatisticalFeatures(object):
+class StatisticalFeaturesDataset(object):
     def __init__(self, data):
         self.data = data
     
@@ -392,6 +394,9 @@ class StatisticalFeatures(object):
         return means, stds, maxs, mins, medians
     
 
+##########################################################
+# Class to get the data into dataset
+##########################################################
 
 class VairableSensorsDataset(Dataset):
     def __init__(self, database, mic_bool = 'True', vibr_bool = 'False', cur_bool = 'False', start_percentage=0.1, stop_percentage = 0.9, window_sec = 1, stride_sec=0.2):
