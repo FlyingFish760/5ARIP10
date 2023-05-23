@@ -123,6 +123,12 @@ def split_extract_features(data, fft_bool=False):
 def split_extract_vibr_features(data, x):
     """ 
     Calculate the statistical features for every x sample points along the last dimension
+
+    return: 
+    feature map of vibration features (both in time and frequenct domain) ->
+    x_vibr_means,x_vibr_maxs...x_vibr_fft_means,x_vibr_fft_maxs...y...z...
+    type: np array
+    size: (n_files * n_time_window(fs*secs/x)) * (30 -> 3(x,y,z)*10(5 time domain features + 5 frequency domain features))
     
     """
 
@@ -196,6 +202,11 @@ def split_extract_mic_features(data, x):
     """ 
     Calculate the statistical features for every x sample points
     
+    return: 
+    feature map of microphone features (both in time and frequenct domain) ->
+    mic_means,mic_maxs...mic_fft_means,mic_fft_maxs...
+    type: np array
+    size: (n_files * n_time_window(fs*secs/x)) * (10 -> 5 time domain features + 5 frequency domain features)
     """
     # only keep the left stereo, since the difference of left and right stereos is very small:
     # shape:[11*1*2646000*2]-> shape:[11*1*2646000*2]
@@ -242,6 +253,97 @@ def split_extract_mic_features(data, x):
     mic_feats = np.array(mic_feats).T
     
     return mic_feats
+
+def extract_time_features(data, x):
+    """ 
+    extract statistical features of data in time domain for every x sample points
+
+    return:
+    feature map (type: np array; 
+    size: (n_files * n_time_window(fs*secs/x)) * (15 features))
+    
+    """
+    # Reshape the data to split them every x sample points
+    reshaped_data = np.reshape(data, (data.shape[0], -1, x))  
+
+    def mean(array):
+        mean = np.mean(array)
+        return mean
+    
+    def max(array):
+        max = np.max(array)
+        return max
+    
+    def Root_Mean_Square(array):
+        RMS = np.sqrt(np.mean(np.square(array)))
+        return RMS
+    def Square_Root_Mean(array):
+        SRM = np.square(np.mean(np.sqrt(np.abs(array))))
+        return SRM
+    def Standard_Deviation(array):
+        SD = np.std(array)
+        return SD
+    def Variance(array):
+        vari = np.var(array)
+        return vari
+    def Form_Factor_with_RMS(array):
+        RMS = np.sqrt(np.mean(np.square(array)))
+        FF_RMS = RMS/(np.mean(np.abs(array)))
+        return FF_RMS
+    def Form_Factor_with_SRM(array):
+        SRM = np.square(np.mean(np.sqrt(np.abs(array))))
+        FF_SRM = SRM/(np.mean(np.abs(array)))
+        return FF_SRM
+    def Crest_Factor(array):
+        max = np.max(array)
+        RMS = np.sqrt(np.mean(np.square(array)))
+        CF = max/RMS
+        return CF
+    def Latitude_Factor(array):
+        max = np.max(array)
+        SRM = np.square(np.mean(np.sqrt(np.abs(array))))
+        LF = max/SRM
+        return LF
+    def Impulse_Factor(array):
+        max = np.max(array)
+        IF = max/(np.mean(np.abs(array)))
+        return IF
+    def Skewness(array):
+        Exp = np.mean(np.power((array - np.mean(array)), 3))
+        SD = np.std(array)
+        sk = Exp/np.power(SD, 3)
+        return sk
+    def Kurtosis(array):
+        Exp = np.mean(np.power((array - np.mean(array)), 4))
+        SD = np.std(array)
+        kur = Exp/np.power(SD, 4)
+        return kur
+    def Moment_5th(array):
+        Exp = np.mean(np.power((array - np.mean(array)), 5))
+        SD = np.std(array)
+        M5 = Exp/np.power(SD, 5)
+        return M5
+    def Moment_6th(array):
+        Exp = np.mean(np.power((array - np.mean(array)), 6))
+        SD = np.std(array)
+        M6 = Exp/np.power(SD, 6)
+        return M6
+    
+    feature_map = []
+    orig_data = reshaped_data
+    functions = [mean, max, Root_Mean_Square, Square_Root_Mean, Standard_Deviation, Variance, Form_Factor_with_RMS, 
+                   Form_Factor_with_SRM, Crest_Factor, Latitude_Factor, Impulse_Factor, Skewness, Kurtosis, Moment_5th,
+                   Moment_6th]
+    for function in functions:
+        array_feat  = np.zeros((reshaped_data.shape[0], reshaped_data.shape[1]))
+        for i in range(orig_data.shape[0]):
+            for j in range(orig_data.shape[1]):
+                array_feat[i, j] = function(orig_data[i, j, :])   
+        array_feat = array_feat.flatten()    
+        feature_map.append(array_feat)
+
+    feature_map = np.array(feature_map).T
+    return feature_map
 
 def plot_basics(anom_means, anom_stds, anom_maxs, anom_mins, anom_medians, norm_means, norm_stds, norm_maxs, norm_mins, norm_medians):
     
