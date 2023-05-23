@@ -354,84 +354,45 @@ class DataPreprocessing(object):
 # Class to get the data into statistical features dataset
 ##########################################################
 
-class StatisticalFeaturesDataset(Dataset):
-    def __init__(self, database, window_sec=2, selected_domain = {'Mic': 'time','Vibr': 'time', 'dSpace': 'time'},
-                 selected_features = {'Mic': ['mean', 'std'], 'dSpace': ['mean','std']}):
-        self.mic_fs = database[0]['Microphone']['SampleRate']
-        self.vibr_fs = database[0]['Vibration']['SampleRate']
-        self.curr_fs = database[0]['dSpace']['SampleRate']
-        self.N_splits = round(60/window_sec)
-        self.working_label = 0
-        self.faulty_label = 1
-        self.selected_features = selected_features
-        self.selected_domain = selected_domain
-
-        self.data, self.labels = self._get_statistical_features(database)
-   
-    def __len__(self):
-        return len(self.labels)
+class StatisticalFeaturesDataset(object):
+    def __init__(self, data):
+        self.data = data
     
-    def __getitem__(self, idx):
-        data = self.data[idx]
-        label = self.labels[idx]
-        return data, label
-    
-    def _get_statistical_features(self, database):
+    def get_statistical_features(self, N_split=50, overlap=0.1, fft_bool=False):
         """
         Generate ...
-        return:  
+        :return:  
         """
+        means = []
+        stds = []
+        maxs = []
+        mins = []
+        medians = []
 
-        statistical_features = []
-        labels = []
-
-        for data in database:  
-            if self.selected_features['Mic']:
-                data_mic = database[data]['Microphone']['Data'][:,0] 
-                splits_mic = np.array_split(data_mic, self.N_splits)
+        for i in self.data:
             
-            if self.selected_features['dSpace']:
-                data_curr = database[data]['dSpace']['i_motor_LP']
-                splits_curr = np.array_split(data_curr, self.N_splits)
+            size = round(len(i)/N_split)
+            step = np.floor((1-overlap)*size)
+            splits = [i[j : j + size] for j in range(0, len(i), step)]
+
+            # splits = np.array_split(i, 50)
             
-            for i in range(self.N_splits):
-                split_i_mic = splits_mic[i]
-                split_i_cur = splits_curr[i]
-
-                if not self.selected_domain['Mic']== 'time':
-                    split_mic_fft = fft(split_i_mic)
-                    split_i_mic = 2.0/(split_i_mic.shape[0]) * np.abs(split_mic_fft[0:split_i_mic.shape[0]//2]) 
-
-                if not self.selected_domain['dSpace']== 'time': 
-                    split_cur_fft = fft(split_i_cur)
-                    split_i_cur = 2.0/(split_i_cur.shape[0]) * np.abs(split_cur_fft[0:split_i_cur.shape[0]//2]) 
-
-                mean_mic,stds_mic,maxs_mic,mins_mic,medians_mic = self._calc_statistics(split_i_mic)
-                mean_cur,stds_cur,maxs_cur,mins_cur,medians_cur = self._calc_statistics(split_i_cur)
-
-                speed = float(database[data]['attributes']['speed'])
-
-                tot_stats_mic = [speed, mean_mic, stds_mic, maxs_mic, mins_mic, medians_mic ]
-                tot_stats_cur = [speed, mean_cur, stds_cur, maxs_cur, mins_cur, medians_cur]
-                tot_stats_mic_curr = [speed, mean_mic, stds_mic, maxs_mic, mins_mic, medians_mic, mean_cur, stds_cur, maxs_cur, mins_cur, medians_cur]
+            for j in splits:
                 
-                tot_stats = tot_stats_mic_curr
-
-                statistical_features.append(torch.Tensor(tot_stats))
-                labels.append(database[data]['attributes']['HD_status'])
-
-
-        return statistical_features, labels
+                if fft_bool:
+                    j_fft = fft(j)
+                    split = 2.0/(j.shape[0]) * np.abs(j_fft[0:j.shape[0]//2])
+                else:
+                    split = j
+                
+                means.append(np.mean(split))
+                stds.append(np.std(split))
+                maxs.append(np.max(split))
+                mins.append(np.min(split))
+                medians.append(np.median(split))
     
-    def _calc_statistics(self,data):
-
-        means = np.mean(data)
-        stds = np.std(data)
-        maxs = np.max(data)
-        mins = np.min(data)
-        medians = np.median(data)
-
         return means, stds, maxs, mins, medians
+    
 
 ##########################################################
 # Class to get the data into dataset
@@ -564,3 +525,5 @@ class VairableSensorsDataset(Dataset):
             print(counter)
 
         return input_data, labels
+
+
