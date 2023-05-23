@@ -14,14 +14,16 @@ class Classifier(nn.Module):
     self.input = input_dim
 
     self.fc1 = nn.Linear(input_dim, 20)
-    self.fc2 = nn.Linear(20, 20)
-    self.fc3 = nn.Linear(20, 1)
+    self.fc2 = nn.Linear(20, 40)
+    self.fc3 = nn.Linear(40, 20)
+    self.fc4 = nn.Linear(20, 1)
     self.sigmoid = nn.Sigmoid()
 
   def forward(self, x):
     x = F.relu(self.fc1(x))
     x = F.relu(self.fc2(x))
     x = F.relu(self.fc3(x))
+    x = self.fc4(x)
     x = self.sigmoid(x)
 
     return x

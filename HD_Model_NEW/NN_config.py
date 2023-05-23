@@ -5,7 +5,7 @@ from dataclasses import dataclass
 class Config:
     batch_size_train = 32
     batch_size_test = 25
-    lr = 0.01
+    lr = 0.001
     lr_momentum = 0.9
     weight_decay = 1e-4
     num_classes = 10
