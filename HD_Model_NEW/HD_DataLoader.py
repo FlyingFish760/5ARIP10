@@ -15,13 +15,9 @@ from torch.utils.data import Dataset
 from scipy.fft import fft
 import torch
 
-
-# TODO: 
-# - functie dat output 1 list voor alle normal drives data en 1 list voor alle faulty drive data. Misschien een functie zoals deze per sensor data?
-#      (ik denk dat het makkelijk is om deze functie eerst te schrijven want die kun je dan gebruiken voor de andere functies hieronder)
-# - functie voor statistical features. voor mic, vibr dspace. Als input de database?
-# - Functie voor NN inputs, dus train, test, val sets with seperate label sets (implement random seed for split of train and test)
-
+##########################################################
+# Class to load all data into a database
+##########################################################
 
 class HD(object):
     def __init__(self, data_path=''):
@@ -204,6 +200,8 @@ class HD(object):
     
     def _get_correct_file(self,folder,attributes):
         
+        file_name = attributes
+
         for i in listdir(folder):
             base_name = splitext(i)[0]
 
@@ -212,9 +210,16 @@ class HD(object):
 
             if attributes['HD_label']in words and attributes['speed'] in words and attributes['test_iter'] in words: 
                 file_name = i
+        
+        if file_name == attributes:
+            print('the following attributes cannot be found in the vibration folder: \n')
+            print(attributes)
 
         return file_name
 
+##########################################################
+# Class to easily access splitted data
+##########################################################
 class SplitNormalFaulty(object):
     def __init__(self, database):
         self.normal = 0
@@ -351,53 +356,96 @@ class DataPreprocessing(object):
 
         return batches, labels
     
+##########################################################
+# Class to get the data into statistical features dataset
+##########################################################
 
-class StatisticalFeatures(object):
-    def __init__(self, data):
-        self.data = data
+class StatisticalFeaturesDataset(Dataset):
+    def __init__(self, database, window_sec=2, selected_domain = {'Mic': 'time', 'dSpace': 'time'}, Mic_bool = 'True', Curr_bool = 'True'):
+        self.mic_fs = database[0]['Microphone']['SampleRate']
+        self.vibr_fs = database[0]['Vibration']['SampleRate']
+        self.curr_fs = database[0]['dSpace']['SampleRate']
+        self.N_splits = round(60/window_sec)
+        self.working_label = 0
+        self.faulty_label = 1
+        self.selected_domain = selected_domain
+        self.Mic_bool = Mic_bool
+        self.Curr_bool = Curr_bool
+        self.data, self.labels = self._get_statistical_features(database)
+   
+    def __len__(self):
+        return len(self.labels)
     
-    def get_statistical_features(self, N_split=50, overlap=0.1, fft_bool=False):
+    def __getitem__(self, idx):
+        data = self.data[idx]
+        label = self.labels[idx]
+        return data, label
+    
+    def _get_statistical_features(self, database):
         """
         Generate ...
-        :return:  
+        return:  
         """
-        means = []
-        stds = []
-        maxs = []
-        mins = []
-        medians = []
 
-        for i in self.data:
-            
-            size = round(len(i)/N_split)
-            step = np.floor((1-overlap)*size)
-            splits = [i[j : j + size] for j in range(0, len(i), step)]
+        statistical_features = []
+        labels = []
 
-            # splits = np.array_split(i, 50)
+        for data in database:  
+            data_mic = database[data]['Microphone']['Data'][:,0] 
+            splits_mic = np.array_split(data_mic, self.N_splits)
+        
+            data_curr = database[data]['dSpace']['i_motor_LP']
+            splits_curr = np.array_split(data_curr, self.N_splits)
             
-            for j in splits:
+            for i in range(self.N_splits):
+                split_i_mic = splits_mic[i]
+                split_i_cur = splits_curr[i]
+
+                if not self.selected_domain['Mic']== 'time':
+                    split_mic_fft = fft(split_i_mic)
+                    split_i_mic = 2.0/(split_i_mic.shape[0]) * np.abs(split_mic_fft[0:split_i_mic.shape[0]//2]) 
+
+                if not self.selected_domain['dSpace']== 'time': 
+                    split_cur_fft = fft(split_i_cur)
+                    split_i_cur = 2.0/(split_i_cur.shape[0]) * np.abs(split_cur_fft[0:split_i_cur.shape[0]//2]) 
+ 
+                #Calculate the features
+                mean_mic,stds_mic,maxs_mic,mins_mic,medians_mic = self._calc_statistics(split_i_mic)
+                mean_cur,stds_cur,maxs_cur,mins_cur,medians_cur = self._calc_statistics(split_i_cur)
+                speed = float(database[data]['attributes']['speed'])
                 
-                if fft_bool:
-                    j_fft = fft(j)
-                    split = 2.0/(j.shape[0]) * np.abs(j_fft[0:j.shape[0]//2])
+                if self.Mic_bool and self.Curr_bool:
+                    tot_stats = [speed, mean_mic, stds_mic, maxs_mic, mins_mic, medians_mic, mean_cur, stds_cur, maxs_cur, mins_cur, medians_cur]
+                elif self.Mic_bool:
+                    tot_stats = [speed, mean_mic, stds_mic, maxs_mic, mins_mic, medians_mic]
                 else:
-                    split = j
-                
-                means.append(np.mean(split))
-                stds.append(np.std(split))
-                maxs.append(np.max(split))
-                mins.append(np.min(split))
-                medians.append(np.median(split))
-    
-        return means, stds, maxs, mins, medians
-    
+                    tot_stats = [speed, mean_cur, stds_cur, maxs_cur, mins_cur, medians_cur]
 
+                statistical_features.append(torch.Tensor(tot_stats))
+                labels.append(database[data]['attributes']['HD_status'])
+
+        return statistical_features, labels
+    
+    def _calc_statistics(self,data):
+
+        means = np.mean(data)
+        stds = np.std(data)
+        maxs = np.max(data)
+        mins = np.min(data)
+        medians = np.median(data)
+
+        return means, stds, maxs, mins, medians
+
+##########################################################
+# Class to get the data into dataset
+##########################################################
 
 class VairableSensorsDataset(Dataset):
     def __init__(self, database, mic_bool = 'True', vibr_bool = 'False', cur_bool = 'False', start_percentage=0.1, stop_percentage = 0.9, window_sec = 1, stride_sec=0.2):
         self.mic_bool = mic_bool
         self.vibr_bool = vibr_bool
         self.cur_bool = cur_bool
+        # self.speed_bool = speed_bool
         self.start_perc = start_percentage
         self.stop_perc = stop_percentage
         self.window_sec = window_sec
@@ -418,19 +466,66 @@ class VairableSensorsDataset(Dataset):
         data = np.array(self.data[idx])
         label = self.labels[idx]
         return data, label
+    
+    def _get_melspectogram_features(self, data,
+                    sr,
+                    n_mels=64,
+                    n_frames=5,
+                    n_fft=1024,
+                    hop_length=512,
+                    power=2.0):
+        """
+        convert file_name to a vector array.
+
+        file_name : str
+            target .wav file
+
+        return : numpy.array( numpy.array( float ) )
+            vector array
+            * dataset.shape = (dataset_size, feature_vector_length)
+        """
+        # calculate the number of dimensions
+        dims = n_mels * n_frames
+
+        mel_spectrogram = librosa.feature.melspectrogram(y=data,
+                                                        sr=sr,
+                                                        n_fft=n_fft,
+                                                        hop_length=hop_length,
+                                                        n_mels=n_mels,
+                                                        power=power)
+
+        # convert melspectrogram to log mel energies
+        log_mel_spectrogram = 20.0 / power * np.log10(np.maximum(mel_spectrogram, sys.float_info.epsilon))
+
+        # calculate total vector size
+        n_vectors = len(log_mel_spectrogram[0, :]) - n_frames + 1
+
+        # skip too short clips
+        if n_vectors < 1:
+            return np.empty((0, dims))
+
+        # generate feature vectors by concatenating multiframes
+        vectors = np.zeros((n_vectors, dims))
+        for t in range(n_frames):
+            vectors[:, n_mels * t : n_mels * (t + 1)] = log_mel_spectrogram[:, t : t + n_vectors].T
+
+        return vectors
+
 
     def _preprocess(self,database):
         input_data = []
         labels = []
-
         for data in database:
             time = database[data]['dSpace']['time']
-            for t in np.arange(round(self.start_perc*time[-1]),round(self.stop_perc*time[-1]),self.stride_sec):
-                
+            data_mic_logmel = self._get_melspectogram_features(database[data]['Microphone']['Data'][:,0], sr=self.mic_fs, n_mels = 128, n_frames = 1, 
+                                                               n_fft = round(self.window_sec*self.mic_fs), hop_length = round(self.stride_sec*self.mic_fs), power=2.0)
+            data_mic_logmel_length = len(data_mic_logmel[:,0])
+            counter = round((1/data_mic_logmel_length) * self.start_perc)
+            for t in np.arange(round(self.start_perc*time[-1]),round(self.stop_perc*time[-1]),self.stride_sec): 
                 if self.mic_bool=='True':
-                    i = round(t*self.mic_fs)
-                    data_mic = database[data]['Microphone']['Data'][:,0]              
-                    data_mic = data_mic[i:i+round(self.window_sec*self.mic_fs)]
+                    # data_mic = database[data]['Microphone']['Data'][:,0]         
+                    # data_mic = data_mic[i:i+round(self.window_sec*self.mic_fs)]
+                    data_mic = data_mic_logmel[counter,:]
                 else:
                     data_mic = []
 
@@ -449,69 +544,26 @@ class VairableSensorsDataset(Dataset):
                 else:
                     data_vibr = []
 
-                if self.cur_bool=='True':
+                if self.cur_bool =='True':
                     i = round(t*self.curr_fs)
                     data_curr = database[data]['dSpace']['i_motor_LP']
                     data_curr = data_curr[i:i+round(self.window_sec*self.curr_fs)]
                 else:
                     data_curr = []
-     
+
+                # if self.speed_bool == 'True':
+                #     speed = database[data]['attributes']['speed']
+                # else:
+                #     speed = []
+
                 #Combine all the sensor data that should be included
+                # data_tot = np.concatenate((data_mic,data_vibr,data_curr,speed))
                 data_tot = np.concatenate((data_mic,data_vibr,data_curr))
                 
-                # print("Length of inputs is {}".format(len(data_tot)))
-
                 #Append to the list
                 input_data.append(torch.Tensor(data_tot))
                 labels.append(database[data]['attributes']['HD_status'])
+                counter = counter+1
+            print(counter)
 
         return input_data, labels
-
-
-
-    #################################
-    # def _get_melspectogram_features(self, data,
-    #                 n_mels=64,
-    #                 n_frames=5,
-    #                 n_fft=1024,
-    #                 hop_length=512,
-    #                 power=2.0):
-    #     """
-    #     convert file_name to a vector array.
-
-    #     file_name : str
-    #         target .wav file
-
-    #     return : numpy.array( numpy.array( float ) )
-    #         vector array
-    #         * dataset.shape = (dataset_size, feature_vector_length)
-    #     """
-    #     # calculate the number of dimensions
-    #     dims = n_mels * n_frames
-
-    #     mel_spectrogram = librosa.feature.melspectrogram(y=data,
-    #                                                     sr=sr,
-    #                                                     n_fft=n_fft,
-    #                                                     hop_length=hop_length,
-    #                                                     n_mels=n_mels,
-    #                                                     power=power)
-
-    #     # convert melspectrogram to log mel energies
-    #     log_mel_spectrogram = 20.0 / power * np.log10(np.maximum(mel_spectrogram, sys.float_info.epsilon))
-
-    #     # calculate total vector size
-    #     n_vectors = len(log_mel_spectrogram[0, :]) - n_frames + 1
-
-    #     # skip too short clips
-    #     if n_vectors < 1:
-    #         return np.empty((0, dims))
-
-    #     # generate feature vectors by concatenating multiframes
-    #     vectors = np.zeros((n_vectors, dims))
-    #     for t in range(n_frames):
-    #         vectors[:, n_mels * t : n_mels * (t + 1)] = log_mel_spectrogram[:, t : t + n_vectors].T
-
-    #     return vectors
-    
-
-
