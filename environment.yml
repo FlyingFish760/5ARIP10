@@ -1,0 +1,10 @@
+﻿name: 5ARIP10
+channels:
+  - conda-forge
+  - defaults
+  - anaconda
+dependencies:
+  - torch=2.0.0
+  - torchaudio=2.0.1
+  - python=3.8.5
+  - librosa
