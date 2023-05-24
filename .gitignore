@@ -7,7 +7,7 @@ __pycache__/
 figures/
 
 # exlude measuement data
-HD_model/
-HD_model_NEW/
-Omron_visit_tests/
+HD_model/HD_data/*
+HD_model_NEW/HD_data/*
+Omron_visit_tests/*
 
