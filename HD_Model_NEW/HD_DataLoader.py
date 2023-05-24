@@ -200,6 +200,8 @@ class HD(object):
     
     def _get_correct_file(self,folder,attributes):
         
+        file_name = attributes
+
         for i in listdir(folder):
             base_name = splitext(i)[0]
 
@@ -208,6 +210,10 @@ class HD(object):
 
             if attributes['HD_label']in words and attributes['speed'] in words and attributes['test_iter'] in words: 
                 file_name = i
+        
+        if file_name == attributes:
+            print('the following attributes cannot be found in the vibration folder: \n')
+            print(attributes)
 
         return file_name
 
@@ -355,17 +361,16 @@ class DataPreprocessing(object):
 ##########################################################
 
 class StatisticalFeaturesDataset(Dataset):
-    def __init__(self, database, window_sec=2, selected_domain = {'Mic': 'time','Vibr': 'time', 'dSpace': 'time'},
-                 selected_features = {'Mic': ['mean', 'std'], 'dSpace': ['mean','std']}):
+    def __init__(self, database, window_sec=2, selected_domain = {'Mic': 'time', 'dSpace': 'time'}, Mic_bool = 'True', Curr_bool = 'True'):
         self.mic_fs = database[0]['Microphone']['SampleRate']
         self.vibr_fs = database[0]['Vibration']['SampleRate']
         self.curr_fs = database[0]['dSpace']['SampleRate']
         self.N_splits = round(60/window_sec)
         self.working_label = 0
         self.faulty_label = 1
-        self.selected_features = selected_features
         self.selected_domain = selected_domain
-
+        self.Mic_bool = Mic_bool
+        self.Curr_bool = Curr_bool
         self.data, self.labels = self._get_statistical_features(database)
    
     def __len__(self):
@@ -386,13 +391,11 @@ class StatisticalFeaturesDataset(Dataset):
         labels = []
 
         for data in database:  
-            if self.selected_features['Mic']:
-                data_mic = database[data]['Microphone']['Data'][:,0] 
-                splits_mic = np.array_split(data_mic, self.N_splits)
-            
-            if self.selected_features['dSpace']:
-                data_curr = database[data]['dSpace']['i_motor_LP']
-                splits_curr = np.array_split(data_curr, self.N_splits)
+            data_mic = database[data]['Microphone']['Data'][:,0] 
+            splits_mic = np.array_split(data_mic, self.N_splits)
+        
+            data_curr = database[data]['dSpace']['i_motor_LP']
+            splits_curr = np.array_split(data_curr, self.N_splits)
             
             for i in range(self.N_splits):
                 split_i_mic = splits_mic[i]
@@ -405,21 +408,21 @@ class StatisticalFeaturesDataset(Dataset):
                 if not self.selected_domain['dSpace']== 'time': 
                     split_cur_fft = fft(split_i_cur)
                     split_i_cur = 2.0/(split_i_cur.shape[0]) * np.abs(split_cur_fft[0:split_i_cur.shape[0]//2]) 
-
+ 
+                #Calculate the features
                 mean_mic,stds_mic,maxs_mic,mins_mic,medians_mic = self._calc_statistics(split_i_mic)
                 mean_cur,stds_cur,maxs_cur,mins_cur,medians_cur = self._calc_statistics(split_i_cur)
-
                 speed = float(database[data]['attributes']['speed'])
-
-                tot_stats_mic = [speed, mean_mic, stds_mic, maxs_mic, mins_mic, medians_mic ]
-                tot_stats_cur = [speed, mean_cur, stds_cur, maxs_cur, mins_cur, medians_cur]
-                tot_stats_mic_curr = [speed, mean_mic, stds_mic, maxs_mic, mins_mic, medians_mic, mean_cur, stds_cur, maxs_cur, mins_cur, medians_cur]
                 
-                tot_stats = tot_stats_mic_curr
+                if self.Mic_bool and self.Curr_bool:
+                    tot_stats = [speed, mean_mic, stds_mic, maxs_mic, mins_mic, medians_mic, mean_cur, stds_cur, maxs_cur, mins_cur, medians_cur]
+                elif self.Mic_bool:
+                    tot_stats = [speed, mean_mic, stds_mic, maxs_mic, mins_mic, medians_mic]
+                else:
+                    tot_stats = [speed, mean_cur, stds_cur, maxs_cur, mins_cur, medians_cur]
 
                 statistical_features.append(torch.Tensor(tot_stats))
                 labels.append(database[data]['attributes']['HD_status'])
-
 
         return statistical_features, labels
     
