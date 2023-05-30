@@ -206,7 +206,7 @@ def split_extract_mic_features(data, x):
     feature map of microphone features (both in time and frequenct domain) ->
     mic_means,mic_maxs...mic_fft_means,mic_fft_maxs...
     type: np array
-    size: (n_files * n_time_window(fs*secs/x)) * (10 -> 5 time domain features + 5 frequency domain features)
+    size: (n_files * n_time_window:fs*secs/x) * (10: 5 time domain features + 5 frequency domain features)
     """
     # only keep the left stereo, since the difference of left and right stereos is very small:
     # shape:[11*1*2646000*2]-> shape:[11*1*2646000*2]
@@ -260,11 +260,11 @@ def extract_time_features(data, x):
 
     return:
     feature map (type: np array; 
-    size: (n_files * n_time_window(fs*secs/x)) * (15 features))
+    size: (n_files * n_time_window: fs*secs/x) * (15 features))
     
     """
     # Reshape the data to split them every x sample points
-    reshaped_data = np.reshape(data, (data.shape[0], -1, x))  
+    reshaped_data = np.resize(data, (data.shape[0], int(data.shape[1]/x), x))  
 
     def mean(array):
         mean = np.mean(array)
@@ -351,7 +351,7 @@ def extract_fft_features(data, x):
 
     return:
     fft feature map (type: np array; 
-    size: (n_files * n_time_window(fs*secs/x)) * (5 features: means, maxs, mins, medians, stds))
+    size: (n_files * n_time_window:fs*secs/x) * (5 features: means, maxs, mins, medians, stds))
     
     """
     # Reshape the reshaped_data to split them every x sample points
