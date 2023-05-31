@@ -91,7 +91,50 @@ class HD(object):
             ids=ids+1
 
         return database
+
+    def generate_database_test_train(self):
+    
+        """
+        Generates and saves the same database as the function above. But then puts N1 and F1 into training set and N2 and F2 in the testing set
+            
+        :return: A database dictionary
+        """
+        print('---------------------------------------------------------')
+        print("Generating database for HD's")
+
+        db_train = {}
+        db_test = {}
         
+        ids_test = 0
+        ids_train = 0
+
+        for i in listdir(self._dSpace_path):
+            # Get the file name without the extension
+            base_name = splitext(i)[0]
+            words = base_name.split('_')
+
+            if words[0].endswith('1'): #put it into the test set
+                db_train[ids_train] = {}
+                db_train[ids_train]['attributes'] = self._get_attributes(i)
+                
+                #Get sensor data
+                db_train[ids_train]['Microphone'] = self._load_mic_data(db_train[ids_train]['attributes'])
+                db_train[ids_train]['Vibration'] = self._load_vibr_data(db_train[ids_train]['attributes'])
+                db_train[ids_train]['dSpace'] = self._load_dSpace_data(i)
+                ids_train=ids_train+1
+            
+            else: #put it into the test set
+                db_test[ids_test] = {}
+                db_test[ids_test]['attributes'] = self._get_attributes(i)
+                
+                #Get sensor data
+                db_test[ids_test]['Microphone'] = self._load_mic_data(db_test[ids_test]['attributes'])
+                db_test[ids_test]['Vibration'] = self._load_vibr_data(db_test[ids_test]['attributes'])
+                db_test[ids_test]['dSpace'] = self._load_dSpace_data(i)
+                ids_test=ids_test+1
+
+        return db_train, db_test
+
     # Data loading functions 
     def _get_attributes(self,file_name):
         # Get the file name without the extension
