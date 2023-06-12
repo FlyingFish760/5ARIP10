@@ -55,7 +55,7 @@ def train():
           running_loss = 0.0
 
   print("Finished training.")
-  save_path = 'model.pth'
+  save_path = 'demo_model.pth'
   torch.save(model.state_dict(), save_path)
   print("Saved trained model as {}.".format(save_path))
 
