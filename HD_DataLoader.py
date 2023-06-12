@@ -404,7 +404,7 @@ class DataPreprocessing(object):
 ##########################################################
 
 class StatisticalFeaturesDataset(Dataset):
-    def __init__(self, database, window_sec=2, selected_domain = {'Mic': 'time', 'dSpace': 'time'}, Mic_bool = 'True', Curr_bool = 'True'):
+    def __init__(self, database, window_sec=2, selected_domain = {'Mic': 'time', 'dSpace': 'time'}, Mic_bool = True, Curr_bool = True):
         self.mic_fs = database[0]['Microphone']['SampleRate']
         self.vibr_fs = database[0]['Vibration']['SampleRate']
         self.curr_fs = database[0]['dSpace']['SampleRate']
