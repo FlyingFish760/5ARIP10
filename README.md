@@ -26,7 +26,7 @@ GA_feature_extraction.py
 
 ## Steps to run
 1. Open main_GA.ipynb  
-2. Run modules "Import libaraies" and "Load in the data". This step would generate a database of test data first, and will then load in the microphone and current test data.  
+2. Run modules "Import libaries" and "Load in the data". This step would generate a database of test data first, and will then load in the microphone and current test data.  
 Things to be adjusted: 
 ```python
 # adjust the data directory to the one on your own PC please
