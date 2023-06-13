@@ -7,6 +7,17 @@ To get started, an environment must be created using the environment.yml file. M
 The repository contains 3 main sections, namely 1. FFT, 2. GA, and 3. NN. To run the code for these three sections, their respective "main..." notebooks can be used. For a more elaborate explanation of the code, please consult the corresponding chapters in this README.
 
 
+# How to run Fast Fourier Transform (FFT)
+
+## Relevant files
+main_FFT.ipynb
+
+## Steps to run
+1. Import the packages that are stated in the first cell of the notebook
+2. Make a directory FFT_figures_in_eps in your main folder, this is for storing the FFT figures as .eps files
+3. Run all cells of the notebook at once
+
+
 # How to run Genetic Algorithm (GA)
 
 ## Relevant files
@@ -56,6 +67,7 @@ features_chosen = genetic_algorithm(data, n_goal_features, population_size, num_
 # note that number of normal test files and anomalous test files should be the same to run this line. Or, adjust n_norm and run.
 features_plot(features, n_norm = int(features_chosen.shape[0]/2))
 ```
+
 
 # How to run Neural Network (NN)
 
