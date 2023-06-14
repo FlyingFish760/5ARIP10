@@ -1,29 +1,32 @@
 # 5ARIP10
-Interdisciplinary team project
+Predictive Maintentance in Harmonic Drives
 
-Team members:
-Jingyuan Han - 1803859
+# Before you get started
+To get started, an environment must be created using the environment.yml file. Moreover, to get a full understanding of what the code in this repository does, and what it is used for, the paper 'Predictive Maintenance in Harmonic Drive Systems' should be read.
+
+The repository contains 3 main sections, namely 1. FFT, 2. GA, and 3. NN. To run the code for these three sections, their respective "main..." notebooks can be used. For a more elaborate explanation of the code, please consult the corresponding chapters in this README.
 
 
-Things to caution:
-1) Before you do any operation, please create a new branch first. After you finish this step, then push it to the main branch. Do not operate directly on main branch!
+# How to run Fast Fourier Transform (FFT)
 
-Packages to download:
--matplotlib
--numpy 
--scipy
--librosa
--latex
+## Relevant files
+main_FFT.ipynb
+
+## Steps to run
+1. Import the packages that are stated in the first cell of the notebook
+2. Make a directory FFT_figures_in_eps in your main folder, this is for storing the FFT figures as .eps files
+3. Run all cells of the notebook at once
+
 
 # How to run Genetic Algorithm (GA)
 
 ## Relevant files
-Genetic_algorithms.ipynb  
+main_GA.ipynb  
 GA_feature_extraction.py
 
 ## Steps to run
-1. Open Genetic_algorithms.ipynb  
-2. Run modules "Import libaraies" and "Load in the data". This step would generate a database of test data first, and will then load in the microphone and current test data.  
+1. Open main_GA.ipynb  
+2. Run modules "Import libaries" and "Load in the data". This step would generate a database of test data first, and will then load in the microphone and current test data.  
 Things to be adjusted: 
 ```python
 # adjust the data directory to the one on your own PC please
@@ -64,3 +67,21 @@ features_chosen = genetic_algorithm(data, n_goal_features, population_size, num_
 # note that number of normal test files and anomalous test files should be the same to run this line. Or, adjust n_norm and run.
 features_plot(features, n_norm = int(features_chosen.shape[0]/2))
 ```
+
+
+# How to run Neural Network (NN)
+
+## Relevant files
+main_NN.ipynb
+NN_config.py
+NN_model.py
+NN_train.py
+
+## Steps to run
+1. Open main_NN.ipynb
+2. Import the packages
+3. Choose whether you would like to use the first itterations procedure, or the second itterations procedure, run the database/dataset generator accordingly.
+4. Run the NN creator, a summary of the model is given as output.
+5. Run the model trainer
+6. Run the plotter, which plots the losses against the epochs. The number or epochs can be determined by selecting an appropriate value from the plot. 
+7. Run the model tester and find its results in the output.
